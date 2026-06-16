@@ -1,0 +1,73 @@
+name: core-veles-platform
+description: Legacy Core/Veles shared platform files migrated from scripts/shared-code-manifest.txt.
+canonical_project: veles
+applicable_projects:
+  - core
+  - veles
+src_paths:
+  - apps/audit/**
+  - apps/authentication/**
+  - apps/common/**
+  - apps/error_handlers/**
+  - apps/health/**
+  - apps/tools/**
+  - config/asgi.py
+  - config/wsgi.py
+  - config/context_processors.py
+  - config/pagination.py
+  - config/settings/__init__.py
+  - config/settings/base.py
+  - config/settings/local.py
+  - config/settings/server.py
+  - config/urls/__init__.py
+  - config/urls/shared/__init__.py
+  - config/urls/shared/base.py
+  - .dockerignore
+  - manage.py
+  - pyproject.toml
+  - requirements/server.txt
+  - apps/tests/__init__.py
+  - apps/tests/base_conftest.py
+  - apps/tests/base_fixtures.py
+  - apps/tests/conftest.py
+  - apps/tests/seed.json
+  - apps/tests/test_db_base.json
+  - apps/tests/unit/__init__.py
+  - apps/tests/unit/audit/**
+  - apps/tests/unit/authentication/**
+  - apps/tests/unit/common/**
+  - apps/tests/unit/error_handlers/**
+  - apps/tests/unit/health/**
+  - apps/tests/unit/tools/**
+  - static/admin/css/admin_base.css
+  - static/admin/css/production.css
+  - static/admin/css/uat.css
+  - templates/admin/403.html
+  - templates/admin/404.html
+  - templates/admin/500.html
+  - templates/admin/base_site.html
+  - templates/admin/db_unavailable.html
+src_excludes:
+  - apps/tests/unit/health/services/test_celery_check.py
+  - apps/tests/unit/health/services/test_flower_check.py
+  - apps/tests/unit/health/services/test_rabbitmq_check.py
+  - apps/tests/unit/health/services/test_redis_check.py
+  - apps/tests/unit/health/test_serializers_additional_checks.py
+  - apps/tests/unit/health/test_views_additional_checks.py
+  - apps/audit/migrations/**
+  - apps/common/migrations/**
+  - requirements/server.txt
+root_paths:
+  - .gitattributes
+  - .gitignore
+  - .pre-commit-config.yaml
+  - dc-infra.bat
+  - dc-infra.sh
+  - dc.bat
+  - dc.sh
+  - docs/nginx-architecture.md
+  - docs/production-deployment-architecture.md
+  - containers/local/oracle/init/01_init.sql
+  - containers/local/oracle/init/02_health_check.sql
+root_excludes:
+  - .pre-commit-config.yaml

@@ -1,0 +1,28 @@
+name: jinja-rendering
+description: Jinja2 rendering, blueprint, artifact, and attachment code shared by Hub, Mailman, and Doccreator.
+canonical_project: hub
+applicable_projects:
+  - hub
+  - mailman
+  - doccreator
+src_paths:
+  - apps/jinja/**/*.py
+  - apps/blueprints/**/*.py
+  - apps/artifacts/**/*.py
+  - apps/attachments/**/*.py
+  - apps/tests/unit/jinja/**/*.py
+  - apps/tests/unit/blueprints/**/*.py
+  - apps/tests/unit/artifacts/**/*.py
+  - apps/tests/unit/attachments/**/*.py
+  - apps/tests/integration/test_admin_blueprint_tests_render.py
+  - apps/tests/integration/test_blueprints_checks.py
+  - apps/tests/integration/test_blueprints_render.py
+  - apps/tests/integration/test_artifact_deletion.py
+  - apps/tests/integration/test_jinja_template_dependencies.py
+  - templates/admin/blueprints/**/*.html
+src_excludes:
+  - apps/artifacts/migrations/**
+  - apps/blueprints/migrations/**
+root_paths: []
+root_excludes: []
+

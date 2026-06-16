@@ -1,0 +1,17 @@
+name: redis-cache
+description: Redis-backed health/cache integration shared by Veles and the H/M/D group.
+canonical_project: hub
+applicable_projects:
+  - veles
+  - hub
+  - mailman
+  - doccreator
+src_paths:
+  - apps/health/services/redis_check.py
+  - apps/tests/unit/health/services/test_redis_check.py
+  - apps/tests/unit/health/test_serializers_additional_checks.py
+  - apps/tests/unit/health/test_views_additional_checks.py
+src_excludes: []
+root_paths: []
+root_excludes: []
+

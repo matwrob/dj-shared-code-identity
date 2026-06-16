@@ -1,0 +1,27 @@
+name: message-queue
+description: Celery, RabbitMQ, Flower, and worker stack files shared by Hub, Mailman, and Doccreator.
+canonical_project: hub
+applicable_projects:
+  - hub
+  - mailman
+  - doccreator
+src_paths:
+  - apps/common_celery/**/*.py
+  - apps/health/services/celery_check.py
+  - apps/health/services/flower_check.py
+  - apps/health/services/rabbitmq_check.py
+  - apps/tests/integration/common_celery/**/*.py
+  - apps/tests/unit/health/services/test_celery_check.py
+  - apps/tests/unit/health/services/test_flower_check.py
+  - apps/tests/unit/health/services/test_rabbitmq_check.py
+  - apps/tests/config/test_celery.py
+  - config/celery.py
+  - config/settings/mq.py
+src_excludes: []
+root_paths:
+  - containers/common/start-flower
+  - containers/local/celery/start
+  - containers/server/celery/start
+  - containers/local/rabbitmq/definitions.json
+  - containers/local/rabbitmq/rabbitmq.conf
+root_excludes: []

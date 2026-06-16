@@ -1,0 +1,53 @@
+name: base
+description: Byte-identical Django foundation shared by Core, Veles, Hub, Mailman, and Doccreator.
+canonical_project: hub
+applicable_projects:
+  - core
+  - veles
+  - hub
+  - mailman
+  - doccreator
+src_paths:
+  - apps/authentication/**/*.py
+  - apps/audit/**/*.py
+  - apps/common/**/*.py
+  - apps/error_handlers/**/*.py
+  - apps/health/**/*.py
+  - apps/tools/**/*.py
+  - apps/tests/unit/authentication/**/*.py
+  - apps/tests/unit/audit/**/*.py
+  - apps/tests/unit/common/**/*.py
+  - apps/tests/unit/error_handlers/**/*.py
+  - apps/tests/unit/health/**/*.py
+  - apps/tests/unit/tools/**/*.py
+  - config/asgi.py
+  - config/wsgi.py
+  - config/context_processors.py
+  - config/settings/__init__.py
+  - .dockerignore
+  - manage.py
+  - static/admin/css/admin_base.css
+  - static/admin/css/production.css
+  - static/admin/css/uat.css
+  - templates/admin/403.html
+  - templates/admin/404.html
+  - templates/admin/500.html
+  - templates/admin/base_site.html
+  - templates/admin/db_unavailable.html
+src_excludes:
+  - apps/audit/migrations/**
+  - apps/common/migrations/**
+  - apps/health/services/celery_check.py
+  - apps/health/services/flower_check.py
+  - apps/health/services/rabbitmq_check.py
+  - apps/health/services/redis_check.py
+  - apps/tests/unit/health/services/test_celery_check.py
+  - apps/tests/unit/health/services/test_flower_check.py
+  - apps/tests/unit/health/services/test_rabbitmq_check.py
+  - apps/tests/unit/health/services/test_redis_check.py
+  - apps/tests/unit/health/test_serializers_additional_checks.py
+  - apps/tests/unit/health/test_views_additional_checks.py
+root_paths:
+  - containers/local/oracle/init/01_init.sql
+  - containers/local/oracle/init/02_health_check.sql
+root_excludes: []
