@@ -1,16 +1,18 @@
 name: core-veles-platform
 description: Legacy Core/Veles shared platform files migrated from scripts/shared-code-manifest.txt.
-canonical_project: veles
+canonical_project: core
 applicable_projects:
   - core
   - veles
 src_paths:
+  - apps/__init__.py
   - apps/audit/**
   - apps/authentication/**
   - apps/common/**
   - apps/error_handlers/**
   - apps/health/**
   - apps/tools/**
+  - apps/utils.py
   - config/asgi.py
   - config/wsgi.py
   - config/context_processors.py
@@ -26,19 +28,21 @@ src_paths:
   - manage.py
   - pyproject.toml
   - requirements/server.txt
-  - apps/tests/__init__.py
-  - apps/tests/base_conftest.py
-  - apps/tests/base_fixtures.py
-  - apps/tests/conftest.py
-  - apps/tests/seed.json
-  - apps/tests/test_db_base.json
-  - apps/tests/unit/__init__.py
-  - apps/tests/unit/audit/**
-  - apps/tests/unit/authentication/**
-  - apps/tests/unit/common/**
-  - apps/tests/unit/error_handlers/**
-  - apps/tests/unit/health/**
-  - apps/tests/unit/tools/**
+  - tests/__init__.py
+  - tests/base_conftest.py
+  - tests/base_fixtures.py
+  - tests/conftest.py
+  - tests/seed.json
+  - tests/test_db_base.json
+  - tests/unit/__init__.py
+  - tests/unit/test_init.py
+  - tests/unit/test_utils.py
+  - tests/unit/audit/**
+  - tests/unit/authentication/**
+  - tests/unit/common/**
+  - tests/unit/error_handlers/**
+  - tests/unit/health/**
+  - tests/unit/tools/**
   - static/admin/css/admin_base.css
   - static/admin/css/production.css
   - static/admin/css/uat.css
@@ -48,12 +52,12 @@ src_paths:
   - templates/admin/base_site.html
   - templates/admin/db_unavailable.html
 src_excludes:
-  - apps/tests/unit/health/services/test_celery_check.py
-  - apps/tests/unit/health/services/test_flower_check.py
-  - apps/tests/unit/health/services/test_rabbitmq_check.py
-  - apps/tests/unit/health/services/test_redis_check.py
-  - apps/tests/unit/health/test_serializers_additional_checks.py
-  - apps/tests/unit/health/test_views_additional_checks.py
+  - tests/unit/health/services/test_celery_check.py
+  - tests/unit/health/services/test_flower_check.py
+  - tests/unit/health/services/test_rabbitmq_check.py
+  - tests/unit/health/services/test_redis_check.py
+  - tests/unit/health/test_serializers_additional_checks.py
+  - tests/unit/health/test_views_additional_checks.py
   - apps/audit/migrations/**
   - apps/common/migrations/**
   - requirements/server.txt
