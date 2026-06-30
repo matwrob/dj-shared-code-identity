@@ -14,9 +14,11 @@ src_paths:
   - apps/health/**
   - apps/tools/**
   - apps/utils.py
+  - config/__init__.py
   - config/asgi.py
   - config/wsgi.py
   - config/context_processors.py
+  - config/middleware.py
   - config/pagination.py
   - config/settings/__init__.py
   - config/settings/base.py
@@ -27,6 +29,7 @@ src_paths:
   - config/urls/shared/base.py
   - .dockerignore
   - manage.py
+  - conftest.py
   - pyproject.toml
   - requirements/shared/base.in
   - requirements/shared/base.txt
