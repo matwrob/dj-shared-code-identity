@@ -29,6 +29,18 @@ LIST_KEYS = {
 }
 
 
+DEFAULT_EXCLUDES = {
+    "*/__pycache__/*",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    ".DS_Store",
+    "*.swp",
+    "*.bak",
+    "~*",
+}
+
+
 @dataclass(frozen=True)
 class Manifest:
     path: Path
@@ -134,9 +146,14 @@ def src_root(workspace: Path, project: str) -> Path:
     return project_root(workspace, project) / "src" / f"{project}-django"
 
 
-def expand_patterns(base: Path, includes: tuple[str, ...], excludes: tuple[str, ...]) -> tuple[list[str], list[str]]:
+def expand_patterns(
+    base: Path,
+    includes: tuple[str, ...],
+    excludes: tuple[str, ...],
+) -> tuple[list[str], list[str]]:
     files: set[str] = set()
     unmatched: list[str] = []
+    combined_excludes = set(excludes) | DEFAULT_EXCLUDES
 
     for pattern in includes:
         matches = sorted(
@@ -148,7 +165,7 @@ def expand_patterns(base: Path, includes: tuple[str, ...], excludes: tuple[str, 
             unmatched.append(pattern)
         files.update(matches)
 
-    for pattern in excludes:
+    for pattern in combined_excludes:
         files = {path for path in files if not fnmatch.fnmatchcase(path, pattern)}
 
     return sorted(files), unmatched
