@@ -36,7 +36,6 @@ src_paths:
   - requirements/shared/dev.in
   - requirements/shared/dev.txt
   - requirements/server.in
-  - requirements/server.txt
   - tests/__init__.py
   - tests/base_conftest.py
   - tests/base_fixtures.py
@@ -44,6 +43,9 @@ src_paths:
   - tests/seed.json
   - tests/test_db_base.json
   - tests/config/test_context_processors.py
+  - tests/config/test_middleware.py
+  - tests/config/test_project_settings.py
+  - tests/config/test_throttling.py
   - tests/e2e/__init__.py
   - tests/e2e/api/__init__.py
   - tests/e2e/load/__init__.py
@@ -85,6 +87,7 @@ root_paths:
   - .pre-commit-config.yaml
   - dc-infra.bat
   - dc-infra.sh
+  - dc-gunicorn.sh
   - dc.bat
   - dc.sh
   - docs/nginx-architecture.md
@@ -94,6 +97,7 @@ root_paths:
   - containers/common/entrypoint
   - containers/compose/infra.yml
   - containers/local/django/start
+  - containers/local/django/start-gunicorn
   - containers/local/oracle/init/01_init.sql
   - containers/local/oracle/init/02_health_check.sql
   - containers/server/django/start
