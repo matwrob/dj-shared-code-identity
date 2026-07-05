@@ -76,6 +76,7 @@ src_excludes:
   - tests/unit/health/services/test_celery_check.py
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
+  - tests/unit/health/services/test_redis_check.py
   - tests/unit/health/test_serializers_additional_checks.py
   - tests/unit/health/test_views_additional_checks.py
   - apps/audit/migrations/**
