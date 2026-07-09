@@ -4,6 +4,9 @@ canonical_project: core
 applicable_projects:
   - core
   - veles
+  - hub
+  - mailman
+  - doccreator
 src_paths:
   - apps/__init__.py
   - apps/config.py
