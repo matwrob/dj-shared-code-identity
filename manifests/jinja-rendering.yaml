@@ -10,15 +10,15 @@ src_paths:
   - apps/blueprints/**/*.py
   - apps/artifacts/**/*.py
   - apps/attachments/**/*.py
-  - apps/tests/unit/jinja/**/*.py
-  - apps/tests/unit/blueprints/**/*.py
-  - apps/tests/unit/artifacts/**/*.py
-  - apps/tests/unit/attachments/**/*.py
-  - apps/tests/integration/test_admin_blueprint_tests_render.py
-  - apps/tests/integration/test_blueprints_checks.py
-  - apps/tests/integration/test_blueprints_render.py
-  - apps/tests/integration/test_artifact_deletion.py
-  - apps/tests/integration/test_jinja_template_dependencies.py
+  - tests/unit/jinja/**/*.py
+  - tests/unit/blueprints/**/*.py
+  - tests/unit/artifacts/**/*.py
+  - tests/unit/attachments/**/*.py
+  - tests/integration/test_admin_blueprint_tests_render.py
+  - tests/integration/test_blueprints_checks.py
+  - tests/integration/test_blueprints_render.py
+  - tests/integration/test_artifact_deletion.py
+  - tests/integration/test_jinja_template_dependencies.py
   - templates/admin/blueprints/**/*.html
 src_excludes:
   - apps/artifacts/migrations/**

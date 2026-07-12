@@ -10,13 +10,15 @@ src_paths:
   - apps/health/services/celery_check.py
   - apps/health/services/flower_check.py
   - apps/health/services/rabbitmq_check.py
-  - apps/tests/integration/common_celery/**/*.py
-  - apps/tests/unit/health/services/test_celery_check.py
-  - apps/tests/unit/health/services/test_flower_check.py
-  - apps/tests/unit/health/services/test_rabbitmq_check.py
-  - apps/tests/config/test_celery.py
+  - tests/integration/common_celery/**/*.py
+  - tests/unit/health/services/test_celery_check.py
+  - tests/unit/health/services/test_flower_check.py
+  - tests/unit/health/services/test_rabbitmq_check.py
+  - tests/config/test_celery.py
   - config/celery.py
   - config/settings/mq.py
+  - config/urls/shared/mq.py
+  - requirements/shared/mq.in
 src_excludes: []
 root_paths:
   - containers/common/start-flower

@@ -31,12 +31,11 @@ src_paths:
   - config/settings/base.py
   - config/settings/local.py
   - config/settings/server.py
-  - config/urls.py
+  - config/urls/shared/hmd.py
   - config/wsgi.py
   - pyproject.toml
   - requirements/server.txt
-  - requirements/shared-dev.txt
-  - requirements/shared.txt
+  - requirements/shared/hmd.in
   - templates/admin/403.html
   - templates/admin/404.html
   - templates/admin/500.html
@@ -46,35 +45,35 @@ src_paths:
   - static/admin/css/admin_base.css
   - static/admin/css/production.css
   - static/admin/css/uat.css
-  - apps/tests/unit/authentication/**/*.py
-  - apps/tests/unit/health/**/*.py
-  - apps/tests/unit/error_handlers/**/*.py
-  - apps/tests/unit/jinja/**/*.py
-  - apps/tests/unit/audit/**/*.py
-  - apps/tests/unit/tools/**/*.py
-  - apps/tests/unit/artifacts/**/*.py
-  - apps/tests/unit/blueprints/**/*.py
-  - apps/tests/unit/attachments/**/*.py
-  - apps/tests/integration/test_admin_blueprint_tests_render.py
-  - apps/tests/integration/test_blueprints_checks.py
-  - apps/tests/integration/test_blueprints_render.py
-  - apps/tests/unit/common/**/*.py
-  - apps/tests/__init__.py
-  - apps/tests/base_fixtures.py
-  - apps/tests/unit/test_config.py
-  - apps/tests/unit/test_init.py
-  - apps/tests/unit/test_utils.py
-  - apps/tests/integration/common_celery/**/*.py
-  - apps/tests/config/test_celery.py
-  - apps/tests/config/test_context_processors.py
-  - apps/tests/config/test_middleware.py
-  - apps/tests/integration/test_admin_file_upload.py
-  - apps/tests/integration/test_artifact_deletion.py
-  - apps/tests/integration/test_jinja_template_dependencies.py
-  - apps/tests/integration/test_openapi_schema.py
-  - apps/tests/e2e/ui/test_file_uploads.py
-  - apps/tests/seed.json
-  - apps/tests/test_db_base.json
+  - tests/unit/authentication/**/*.py
+  - tests/unit/health/**/*.py
+  - tests/unit/error_handlers/**/*.py
+  - tests/unit/jinja/**/*.py
+  - tests/unit/audit/**/*.py
+  - tests/unit/tools/**/*.py
+  - tests/unit/artifacts/**/*.py
+  - tests/unit/blueprints/**/*.py
+  - tests/unit/attachments/**/*.py
+  - tests/integration/test_admin_blueprint_tests_render.py
+  - tests/integration/test_blueprints_checks.py
+  - tests/integration/test_blueprints_render.py
+  - tests/unit/common/**/*.py
+  - tests/__init__.py
+  - tests/base_fixtures.py
+  - tests/unit/test_config.py
+  - tests/unit/test_init.py
+  - tests/unit/test_utils.py
+  - tests/integration/common_celery/**/*.py
+  - tests/config/test_celery.py
+  - tests/config/test_context_processors.py
+  - tests/config/test_middleware.py
+  - tests/integration/test_admin_file_upload.py
+  - tests/integration/test_artifact_deletion.py
+  - tests/integration/test_jinja_template_dependencies.py
+  - tests/integration/test_openapi_schema.py
+  - tests/e2e/ui/test_file_uploads.py
+  - tests/seed.json
+  - tests/test_db_base.json
 src_excludes:
   - apps/audit/migrations/**
   - apps/artifacts/migrations/**

@@ -8,9 +8,9 @@ applicable_projects:
   - doccreator
 src_paths:
   - apps/health/services/redis_check.py
-  - apps/tests/unit/health/services/test_redis_check.py
-  - apps/tests/unit/health/test_serializers_additional_checks.py
-  - apps/tests/unit/health/test_views_additional_checks.py
+  - tests/unit/health/services/test_redis_check.py
+  - tests/unit/health/test_serializers_additional_checks.py
+  - tests/unit/health/test_views_additional_checks.py
 src_excludes: []
 root_paths: []
 root_excludes: []
