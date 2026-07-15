@@ -1,0 +1,28 @@
+name: core-veles-platform
+description: Files shared by Core and Veles only (no MQ worker stack, no HMD extensions).
+canonical_project: core
+applicable_projects:
+  - core
+  - veles
+src_paths:
+  # C/V pair files whose HMD variants differ by design: config/__init__.py
+  # is empty here (HMD import the Celery app); pyproject.toml carries no
+  # MQ tooling config.
+  - pyproject.toml
+  - config/__init__.py
+root_paths:
+  # No celery/flower COPY lines (MQ stack) and no project-specific dnf blocks;
+  # HMD variants of these files live in hmd-platform.yaml.
+  - containers/compose/server.yml
+  # gthread worker model (HMD switched to gevent for MQ dispatch;
+  # their variant lives in message-queue.yaml)
+  - containers/server/django/start
+  - containers/local/base/Dockerfile
+  - containers/server/base/Dockerfile
+root_excludes: []
+project_name_insensitive:
+  # These embed the project name (src/<project>-django copies,
+  # ${PROJECT_IMAGE_TAG} tokens) but are structurally identical.
+  - root:containers/compose/server.yml
+  - root:containers/local/base/Dockerfile
+  - root:containers/server/base/Dockerfile

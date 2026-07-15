@@ -37,6 +37,31 @@ An include pattern (`src_paths`/`root_paths` entry) that matches no files in
 the canonical project is a hard error (exit code 2), independent of
 `--strict`: it always means a stale path or a typo in the manifest.
 
+## Syncing
+
+`--sync` prints the copies needed to make every applicable project match
+the canonical project, per manifest; `--sync --apply` writes them.
+`project_name_insensitive` files are never copied (they embed each
+project's own name) and are reported as skipped.
+
+```bash
+PYTHONPATH=src python -m shared_code_identity.cli --manifest base --sync
+PYTHONPATH=src python -m shared_code_identity.cli --manifest base --sync --apply
+```
+
+**Always dry-run first.** Sync assumes the canonical copy is the best
+copy. Drift can also mean a *pending best-of-both merge* (a sibling
+carries an improvement or a legitimate extension the canonical lacks) —
+applying sync in that state overwrites the sibling's work. Read the
+verify report, resolve intentional divergence forward into the
+canonical project first, then sync.
+
+Shared requirement layers are governed the same way: the canonical
+`requirements/shared/*.in` live in each manifest's canonical project
+and are distributed with `--sync` (this replaced the retired
+`scripts/sync-shared-requirements.sh` and the separate
+`shared-requirements/` directory).
+
 ## Manifest Format
 
 Each manifest is YAML using a small, dependency-free subset:

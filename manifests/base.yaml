@@ -17,7 +17,6 @@ src_paths:
   - apps/health/**
   - apps/tools/**
   - apps/utils.py
-  - config/__init__.py
   - config/asgi.py
   - config/wsgi.py
   - config/context_processors.py
@@ -27,27 +26,39 @@ src_paths:
   - config/settings/base.py
   - config/settings/local.py
   - config/settings/server.py
+  # Redis scope module (all five projects use the Redis-backed cache).
+  # config/settings/project.py is deliberately untracked: it is the
+  # per-project composition root of the shared scope modules.
+  - config/settings/redis.py
   - config/urls/__init__.py
+  # Generic: routes resolve from settings.DOMAIN_API_URLS (project.py)
+  - config/urls/domain.py
   - config/urls/shared/__init__.py
   - config/urls/shared/base.py
   - .dockerignore
   - manage.py
   - conftest.py
-  - pyproject.toml
+  # Shared requirement layers: canonical .in synced from the canonical
+  # project via --sync; layer locks compiled once and distributed.
   - requirements/shared/base.in
   - requirements/shared/base.txt
   - requirements/shared/dev.in
   - requirements/shared/dev.txt
+  - requirements/shared/docs.in
+  - requirements/shared/docs.txt
   - requirements/server.in
   - tests/__init__.py
   - tests/base_conftest.py
   - tests/base_fixtures.py
+  # Shared factories (project-specific factories and populator stay per-project)
+  - tests/factories/audit.py
+  - tests/factories/auth.py
   - tests/conftest.py
   - tests/seed.json
   - tests/test_db_base.json
   - tests/config/test_context_processors.py
   - tests/config/test_middleware.py
-  - tests/config/test_project_settings.py
+  - tests/config/test_redis_settings.py
   - tests/config/test_throttling.py
   - tests/e2e/__init__.py
   - tests/e2e/api/__init__.py
@@ -76,12 +87,15 @@ src_paths:
   - templates/admin/base_site.html
   - templates/admin/db_unavailable.html
 src_excludes:
+  # MQ-stack health check tests are HMD-only (hmd-platform.yaml):
+  # Core/Veles have no Celery/RabbitMQ libraries installed.
   - tests/unit/health/services/test_celery_check.py
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
-  - tests/unit/health/test_serializers_additional_checks.py
-  - tests/unit/health/test_views_additional_checks.py
   - apps/audit/migrations/**
+  # Migration histories legitimately diverge (Core squashes around its
+  # production DB; dev projects regenerate freely).
+  - apps/authentication/migrations/**
   - apps/common/migrations/**
   - requirements/server.txt
 root_paths:
@@ -97,16 +111,24 @@ root_paths:
   - docs/production-deployment-architecture.md
   - containers/ci/**
   - containers/common/entrypoint
+  - containers/compose/gunicorn.yml
   - containers/compose/infra.yml
   - containers/local/django/start
   - containers/local/django/start-gunicorn
+  - containers/local/nginx/nginx.conf
   - containers/local/oracle/init/01_init.sql
   - containers/local/oracle/init/02_health_check.sql
   - containers/local/rabbitmq/**
-  - containers/server/django/start
+  - containers/server/nginx/nginx.conf
   - deployment/build_push/VERSION.example
 root_excludes: []
 project_name_insensitive:
   # Structurally identical across projects; hook commands necessarily embed
   # the project name (container names, ^src/<project>-django/ file filters).
   - root:.pre-commit-config.yaml
+  # nginx configs differ only in <project>_media_access.log-style log names.
+  - root:containers/local/nginx/nginx.conf
+  - root:containers/server/nginx/nginx.conf
+  # NOTE: never flag files that are byte-identical because they enumerate ALL
+  # projects (01_init.sql, rabbitmq definitions.json) — normalizing each
+  # project's own name would break their identity.

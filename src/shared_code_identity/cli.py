@@ -20,11 +20,15 @@ PROJECT_ROOTS = {
     "doccreator": Path("doccreator"),
 }
 
-# Case-insensitive, word-bounded match of a project's own name inside its own
-# files. Word boundaries keep unrelated words intact (e.g. "github" never
-# matches "hub") while still catching hyphenated forms like "core-django".
+# Case-insensitive match of a project's own name inside its own files, bounded
+# by non-alphanumeric characters. Letters/digits must not touch the name (so
+# "github" never matches "hub"), but "_" counts as a separator to catch
+# snake_case compounds like "core_media_access.log" or "CORE_IMAGE_TAG"
+# alongside hyphenated forms like "core-django".
 PROJECT_NAME_PATTERNS = {
-    project: re.compile(rf"\b{re.escape(project)}\b", re.IGNORECASE)
+    project: re.compile(
+        rf"(?<![A-Za-z0-9]){re.escape(project)}(?![A-Za-z0-9])", re.IGNORECASE
+    )
     for project in PROJECT_ROOTS
 }
 
@@ -429,6 +433,74 @@ def verify_manifest(workspace: Path, manifest: Manifest, detail_limit: int) -> t
     return differ, equivalent, missing
 
 
+def sync_manifest(
+    workspace: Path, manifest: Manifest, apply: bool
+) -> tuple[int, int]:
+    """Copy canonical files over drifted or missing sibling copies.
+
+    Dry-run unless ``apply`` is true. Files flagged
+    project_name_insensitive are never copied (they legitimately embed
+    each project's own name); differing ones are reported as skipped.
+    Returns (planned_or_copied, skipped_name_insensitive).
+    """
+    files, unmatched = manifest_files(workspace, manifest)
+    if unmatched:
+        raise_unmatched_patterns(workspace, manifest, unmatched)
+    name_insensitive, unmatched_flags = flagged_files(manifest, files)
+    if unmatched_flags:
+        raise ValueError(
+            f"manifest {manifest.name!r}: project_name_insensitive pattern(s) "
+            f"matched no tracked files: "
+            + ", ".join(repr(item) for item in unmatched_flags)
+        )
+
+    copied = 0
+    skipped = 0
+    print(f"=== {manifest.name} (sync{'' if apply else ' — dry run'}) ===")
+    for shared_file in files:
+        canonical_path = absolute_path(
+            workspace, manifest.canonical_project, shared_file
+        )
+        if not canonical_path.is_file():
+            # verify reports this as missing-in-canonical via patterns;
+            # an individually vanished file is surfaced here.
+            print(f"  !! no canonical copy: {shared_file.relative_path}")
+            continue
+        canonical_digest = digest(canonical_path)
+        targets = []
+        for project in manifest.applicable_projects:
+            if project == manifest.canonical_project:
+                continue
+            path = absolute_path(workspace, project, shared_file)
+            if not path.is_file() or digest(path) != canonical_digest:
+                targets.append((project, path))
+        if not targets:
+            continue
+        if shared_file in name_insensitive:
+            skipped += 1
+            print(
+                f"  SKIP (name-insensitive) "
+                f"{shared_file.anchor}:{shared_file.relative_path} -> "
+                + ", ".join(project for project, _ in targets)
+            )
+            continue
+        copied += len(targets)
+        verb = "sync" if apply else "would sync"
+        print(
+            f"  {verb} {shared_file.anchor}:{shared_file.relative_path} -> "
+            + ", ".join(project for project, _ in targets)
+        )
+        if apply:
+            data = canonical_path.read_bytes()
+            for _project, path in targets:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+    print(f"  {copied} cop{'ies' if copied != 1 else 'y'} "
+          f"{'written' if apply else 'planned'}, {skipped} skipped")
+    print()
+    return copied, skipped
+
+
 def load_manifests(manifest_dir: Path, selected: set[str] | None) -> list[Manifest]:
     manifests = [parse_manifest(path) for path in sorted(manifest_dir.glob("*.yaml"))]
     if selected:
@@ -461,7 +533,13 @@ def main() -> int:
     parser.add_argument("--manifest", action="append", help="Manifest name or filename to verify.")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero on drift or missing files.")
     parser.add_argument("--detail-limit", type=int, default=50, help="Maximum detailed rows per section.")
+    parser.add_argument("--sync", action="store_true", help="Copy canonical files over drifted/missing sibling copies (dry run unless --apply).")
+    parser.add_argument("--apply", action="store_true", help="With --sync: write the copies instead of printing the plan.")
     args = parser.parse_args()
+
+    if args.apply and not args.sync:
+        print("ERROR: --apply requires --sync", file=sys.stderr)
+        return 2
 
     workspace = args.workspace.resolve()
     manifest_dir = args.manifest_dir.resolve()
@@ -475,6 +553,26 @@ def main() -> int:
     if not manifests:
         print(f"ERROR: no manifests found in {manifest_dir}", file=sys.stderr)
         return 2
+
+    if args.sync:
+        total_copied = 0
+        total_skipped = 0
+        try:
+            for manifest in manifests:
+                copied, skipped = sync_manifest(workspace, manifest, args.apply)
+                total_copied += copied
+                total_skipped += skipped
+        except ValueError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        print(
+            f"=== Sync summary ===\ncopies "
+            f"{'written' if args.apply else 'planned'}={total_copied} "
+            f"skipped_name_insensitive={total_skipped}"
+        )
+        if not args.apply and total_copied:
+            print("Dry run — re-run with --sync --apply to write.")
+        return 0
 
     total_differ = 0
     total_equivalent = 0

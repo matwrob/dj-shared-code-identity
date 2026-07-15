@@ -529,6 +529,22 @@ class TestNormalizedDigest:
             veles, "veles"
         )
 
+    def test_underscore_compounds_are_normalized(self, tmp_path: Path) -> None:
+        # Underscores count as separators: snake_case log names and env-var
+        # tokens embedding the project name must align across projects.
+        core = tmp_path / "core.txt"
+        veles = tmp_path / "veles.txt"
+        core.write_text(
+            "log core_media_access.log tag ${CORE_IMAGE_TAG}\n", encoding="utf-8"
+        )
+        veles.write_text(
+            "log veles_media_access.log tag ${VELES_IMAGE_TAG}\n", encoding="utf-8"
+        )
+
+        assert cli.normalized_digest(core, "core") == cli.normalized_digest(
+            veles, "veles"
+        )
+
     def test_only_own_project_name_is_normalized(self, tmp_path: Path) -> None:
         # A veles file mentioning "core" keeps that token verbatim, so it
         # cannot accidentally align with a core file that had "core" replaced.
@@ -629,3 +645,106 @@ class TestMain:
 
         assert exit_code == 2
         assert "matched no files in canonical project 'core'" in capsys.readouterr().err
+
+
+class TestSync:
+    """--sync copies canonical bytes over drifted/missing siblings."""
+
+    def make(self, tmp_path):
+        workspace = make_workspace(
+            tmp_path,
+            {
+                "core": {
+                    "src:requirements/shared/base.in": "Django==5.2.16\n",
+                    "root:dc.sh": "# Core\n",
+                },
+                "veles": {
+                    "src:requirements/shared/base.in": "Django==5.2.15\n",
+                    "root:dc.sh": "# Veles\n",
+                },
+            },
+        )
+        write_manifest(
+            tmp_path,
+            MANIFEST_TEMPLATE.format(
+                body=(
+                    "src_paths:\n"
+                    "  - requirements/shared/base.in\n"
+                    "root_paths:\n"
+                    "  - dc.sh\n"
+                    "project_name_insensitive:\n"
+                    "  - root:dc.sh\n"
+                )
+            ),
+        )
+        return workspace
+
+    def run_cli(self, tmp_path, monkeypatch, *extra):
+        argv = [
+            "cli",
+            "--workspace",
+            str(tmp_path / "workspace"),
+            "--manifest-dir",
+            str(tmp_path / "manifests"),
+            *extra,
+        ]
+        monkeypatch.setattr(cli.sys, "argv", argv)
+        return cli.main()
+
+    def test_dry_run_plans_but_writes_nothing(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        workspace = self.make(tmp_path)
+
+        exit_code = self.run_cli(tmp_path, monkeypatch, "--sync")
+
+        out = capsys.readouterr().out
+        assert exit_code == 0
+        assert "would sync src:requirements/shared/base.in -> veles" in out
+        assert "SKIP (name-insensitive) root:dc.sh -> veles" in out
+        target = (
+            workspace / "veles" / "src" / "veles-django"
+            / "requirements" / "shared" / "base.in"
+        )
+        assert target.read_text() == "Django==5.2.15\n"
+
+    def test_apply_writes_canonical_bytes(self, tmp_path, monkeypatch, capsys):
+        workspace = self.make(tmp_path)
+
+        exit_code = self.run_cli(tmp_path, monkeypatch, "--sync", "--apply")
+
+        out = capsys.readouterr().out
+        assert exit_code == 0
+        assert "copies written=1" in out
+        target = (
+            workspace / "veles" / "src" / "veles-django"
+            / "requirements" / "shared" / "base.in"
+        )
+        assert target.read_text() == "Django==5.2.16\n"
+        # name-insensitive file untouched
+        assert (workspace / "veles" / "dc.sh").read_text() == "# Veles\n"
+
+    def test_apply_creates_missing_files(self, tmp_path, monkeypatch):
+        workspace = self.make(tmp_path)
+        (
+            workspace / "veles" / "src" / "veles-django"
+            / "requirements" / "shared" / "base.in"
+        ).unlink()
+
+        self.run_cli(tmp_path, monkeypatch, "--sync", "--apply")
+
+        target = (
+            workspace / "veles" / "src" / "veles-django"
+            / "requirements" / "shared" / "base.in"
+        )
+        assert target.read_text() == "Django==5.2.16\n"
+
+    def test_apply_without_sync_is_an_error(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        self.make(tmp_path)
+
+        exit_code = self.run_cli(tmp_path, monkeypatch, "--apply")
+
+        assert exit_code == 2
+        assert "--apply requires --sync" in capsys.readouterr().err

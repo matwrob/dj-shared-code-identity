@@ -7,15 +7,10 @@ applicable_projects:
   - doccreator
 src_paths:
   - apps/common_celery/**/*.py
-  - apps/authentication/**/*.py
-  - apps/health/**/*.py
-  - apps/error_handlers/**/*.py
+  - apps/tools_mq/**/*.py
   - apps/jinja/**/*.py
-  - apps/audit/**/*.py
-  - apps/tools/**/*.py
   - apps/artifacts/**/*.py
   - apps/blueprints/**/*.py
-  - apps/common/**/*.py
   - apps/attachments/**/*.py
   - apps/config.py
   - apps/utils.py
@@ -24,17 +19,14 @@ src_paths:
   - manage.py
   - config/__init__.py
   - config/asgi.py
-  - config/celery.py
   - config/context_processors.py
   - config/middleware.py
-  - config/settings/__init__.py
-  - config/settings/base.py
-  - config/settings/local.py
-  - config/settings/server.py
+  # base/local/server/__init__ settings are all-five files owned by
+  # base.yaml; here only the HMD-scope module.
+  - config/settings/hmd.py
   - config/urls/shared/hmd.py
   - config/wsgi.py
   - pyproject.toml
-  - requirements/server.txt
   - requirements/shared/hmd.in
   - templates/admin/403.html
   - templates/admin/404.html
@@ -45,59 +37,47 @@ src_paths:
   - static/admin/css/admin_base.css
   - static/admin/css/production.css
   - static/admin/css/uat.css
-  - tests/unit/authentication/**/*.py
-  - tests/unit/health/**/*.py
-  - tests/unit/error_handlers/**/*.py
   - tests/unit/jinja/**/*.py
-  - tests/unit/audit/**/*.py
-  - tests/unit/tools/**/*.py
+  - tests/unit/tools_mq/**/*.py
+  # MQ-stack tests for the otherwise all-five health app (excluded
+  # from base.yaml).
+  - tests/unit/health/services/test_celery_check.py
+  - tests/unit/health/services/test_flower_check.py
+  - tests/unit/health/services/test_rabbitmq_check.py
   - tests/unit/artifacts/**/*.py
   - tests/unit/blueprints/**/*.py
   - tests/unit/attachments/**/*.py
   - tests/integration/test_admin_blueprint_tests_render.py
   - tests/integration/test_blueprints_checks.py
   - tests/integration/test_blueprints_render.py
-  - tests/unit/common/**/*.py
-  - tests/__init__.py
-  - tests/base_fixtures.py
+  - tests/hmd_fixtures.py
+  - tests/factories/artifacts.py
+  - tests/factories/blueprints.py
   - tests/unit/test_config.py
   - tests/unit/test_init.py
   - tests/unit/test_utils.py
   - tests/integration/common_celery/**/*.py
-  - tests/config/test_celery.py
-  - tests/config/test_context_processors.py
-  - tests/config/test_middleware.py
   - tests/integration/test_admin_file_upload.py
   - tests/integration/test_artifact_deletion.py
   - tests/integration/test_jinja_template_dependencies.py
   - tests/integration/test_openapi_schema.py
   - tests/e2e/ui/test_file_uploads.py
-  - tests/seed.json
-  - tests/test_db_base.json
 src_excludes:
-  - apps/audit/migrations/**
   - apps/artifacts/migrations/**
   - apps/blueprints/migrations/**
-  - apps/common/migrations/**
 root_paths:
-  - containers/local/django/entrypoint
-  - containers/server/django/entrypoint
-  - containers/common/start-flower
-  - containers/local/django/start
-  - containers/local/celery/start
-  - containers/server/django/start
-  - containers/server/celery/start
-  - containers/compose/infra.yml
-  - containers/local/oracle/init/01_init.sql
-  - containers/local/oracle/init/02_health_check.sql
-  - containers/local/rabbitmq/definitions.json
-  - containers/local/rabbitmq/rabbitmq.conf
-  - dc.bat
-  - dc-infra.sh
-  - dc-infra.bat
-  - deployment/build_push/VERSION.example
+  # All-five container files live in base.yaml; MQ worker scripts live in
+  # message-queue.yaml. Here: files whose HMD shape differs from Core/Veles
+  # (celery/flower COPY lines in the Dockerfiles).
+  - containers/local/base/Dockerfile
+  - containers/server/base/Dockerfile
   - docs/shared/**
   - scripts/shared-code-manifest.txt
   - scripts/verify-shared-identity.sh
   - scripts/sync-shared-from.sh
 root_excludes: []
+project_name_insensitive:
+  # Structurally identical modulo the project's own name; DocCreator is
+  # expected to drift until its WeasyPrint dnf block is parameterized.
+  - root:containers/local/base/Dockerfile
+  - root:containers/server/base/Dockerfile

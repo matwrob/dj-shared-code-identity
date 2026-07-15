@@ -15,15 +15,20 @@ src_paths:
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
   - tests/config/test_celery.py
+  - tests/common_celery_safety.py
+  - config/celery.py
   - config/celery.py
   - config/settings/mq.py
   - config/urls/shared/mq.py
   - requirements/shared/mq.in
 src_excludes: []
 root_paths:
+  # RabbitMQ broker configs live in base.yaml: the broker is shared infra
+  # that any of the five projects may start, so all five copies must match.
   - containers/common/start-flower
+  # gevent worker model (gthread blocked OS threads on RabbitMQ
+  # dispatch, soak test May 2026); Core/Veles keep gthread.
+  - containers/server/django/start
   - containers/local/celery/start
   - containers/server/celery/start
-  - containers/local/rabbitmq/definitions.json
-  - containers/local/rabbitmq/rabbitmq.conf
 root_excludes: []
