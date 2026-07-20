@@ -58,6 +58,7 @@ src_paths:
   - tests/test_db_base.json
   - tests/config/test_context_processors.py
   - tests/config/test_middleware.py
+  - tests/config/test_password_hashers.py
   - tests/config/test_redis_settings.py
   - tests/config/test_throttling.py
   - tests/e2e/__init__.py
