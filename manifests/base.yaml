@@ -100,6 +100,7 @@ src_excludes:
   - apps/common/migrations/**
   - requirements/server.txt
 root_paths:
+  - .editorconfig
   - .gitattributes
   - .gitignore
   - .pre-commit-config.yaml
