@@ -5,10 +5,13 @@ applicable_projects:
   - core
   - veles
 src_paths:
-  # C/V pair files whose HMD variants differ by design: config/__init__.py
-  # is empty here (HMD import the Celery app); pyproject.toml carries no
-  # MQ tooling config.
-  - pyproject.toml
+  # C/V pair files whose HMD variants differ by design:
+  # config/__init__.py is empty here (HMD import the Celery app).
+  # pyproject.toml removed 2026-07-24: legitimately per-project — each
+  # project carries its own coverage fail_under ratchet (Core 99.15,
+  # Veles 97.92), so byte-identity is impossible by design; tool-config
+  # (ruff/bandit) alignment is reviewed manually at calibration passes
+  # (same rationale as the hmd-platform.yaml removal).
   - config/__init__.py
 root_paths:
   # No celery/flower COPY lines (MQ stack) and no project-specific dnf blocks;

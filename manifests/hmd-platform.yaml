@@ -26,7 +26,12 @@ src_paths:
   - config/settings/hmd.py
   - config/urls/shared/hmd.py
   - config/wsgi.py
-  - pyproject.toml
+  # pyproject.toml removed 2026-07-24: it is legitimately per-project —
+  # each project carries its own coverage fail_under ratchet, and
+  # Mailman rescoped its coverage basis to ["apps", "config"] (audit
+  # P2-1) while the siblings keep the historical "." basis until the
+  # next calibration. Byte-identity is impossible by design; tool-config
+  # (ruff/bandit) alignment is reviewed manually at calibration passes.
   - requirements/shared/hmd.in
   - templates/admin/403.html
   - templates/admin/404.html
