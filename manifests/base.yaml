@@ -138,6 +138,12 @@ project_name_insensitive:
   - root:.pre-commit-config.yaml
   # nginx configs differ only in <project>_media_access.log-style log names.
   - root:containers/local/nginx/nginx.conf
+  # NOTE: Veles is EXPECTED to drift on the server nginx.conf — it runs
+  # on the gateway server itself (WAF -> gateway Nginx -> Veles over the
+  # podman network), so its file plays the gateway role, while the other
+  # projects' files are the second-hop Nginx behind that gateway
+  # (WAF -> gateway -> project nginx -> app). Do not sync the canonical
+  # copy over Veles.
   - root:containers/server/nginx/nginx.conf
   # NOTE: never flag files that are byte-identical because they enumerate ALL
   # projects (01_init.sql, rabbitmq definitions.json) — normalizing each
