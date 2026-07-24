@@ -1,6 +1,6 @@
 name: base
 description: Byte-identical Django foundation shared by all Django projects.
-canonical_project: core
+canonical_project: hub
 applicable_projects:
   - core
   - veles
@@ -54,8 +54,9 @@ src_paths:
   - tests/factories/audit.py
   - tests/factories/auth.py
   - tests/conftest.py
-  - tests/seed.json
-  - tests/test_db_base.json
+  # tests/seed.json + tests/test_db_base.json removed 2026-07-24
+  # (P2-16): the factory populator replaced the legacy JSON
+  # fixtures; the files are deleted in all projects.
   - tests/config/test_context_processors.py
   - tests/config/test_middleware.py
   - tests/config/test_password_hashers.py
@@ -113,10 +114,17 @@ root_paths:
   - docs/production-deployment-architecture.md
   - containers/ci/**
   - containers/common/entrypoint
-  - containers/compose/gunicorn.yml
+  # containers/compose/gunicorn.yml and
+  # containers/local/django/start-gunicorn removed 2026-07-24
+  # (P2-14/P1-7): both are prod-PARITY files and production differs
+  # per project — the compose override embeds project-specific
+  # throttle scopes (Core has draw rates, Mailman does not) and the
+  # start script mirrors each project's own
+  # containers/server/django/start (gevent for the MQ projects,
+  # which Core/Veles do not install). They were only ever
+  # "identical" because Mailman carried a stale Core copy.
   - containers/compose/infra.yml
   - containers/local/django/start
-  - containers/local/django/start-gunicorn
   - containers/local/nginx/nginx.conf
   - containers/local/oracle/init/01_init.sql
   - containers/local/oracle/init/02_health_check.sql
