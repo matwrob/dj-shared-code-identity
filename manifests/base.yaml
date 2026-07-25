@@ -57,6 +57,7 @@ src_paths:
   # tests/seed.json + tests/test_db_base.json removed 2026-07-24
   # (P2-16): the factory populator replaced the legacy JSON
   # fixtures; the files are deleted in all projects.
+  - tests/config/test_collection_hooks.py
   - tests/config/test_context_processors.py
   - tests/config/test_middleware.py
   - tests/config/test_password_hashers.py
