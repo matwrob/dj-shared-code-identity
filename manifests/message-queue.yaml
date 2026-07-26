@@ -1,22 +1,27 @@
 name: message-queue
-description: Celery, RabbitMQ, Flower, and worker stack files shared by Hub, Mailman, and Doccreator.
+description: Celery, RabbitMQ, Flower, and worker stack files shared by all five projects. The MQ stack is a dedicated, additive scope — a project opts in via config.settings.project (apply_mq_settings + tools_mq app + shared/mq urls); base stays MQ-free so future non-MQ projects need none of this.
 canonical_project: hub
 applicable_projects:
   - hub
   - mailman
   - doccreator
+  - core
+  - veles
 src_paths:
   - apps/common_celery/**/*.py
+  # Flower/RabbitMQ admin proxy — MQ machinery (moved here from
+  # hmd-platform.yaml when Core/Veles onboarded the stack, 2026-07-26).
+  - apps/tools_mq/**/*.py
   - apps/health/services/celery_check.py
   - apps/health/services/flower_check.py
   - apps/health/services/rabbitmq_check.py
   - tests/integration/common_celery/**/*.py
+  - tests/unit/tools_mq/**/*.py
   - tests/unit/health/services/test_celery_check.py
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
   - tests/config/test_celery.py
   - tests/common_celery_safety.py
-  - config/celery.py
   - config/celery.py
   - config/settings/mq.py
   - config/urls/shared/mq.py
@@ -27,8 +32,16 @@ root_paths:
   # that any of the five projects may start, so all five copies must match.
   - containers/common/start-flower
   # gevent worker model (gthread blocked OS threads on RabbitMQ
-  # dispatch, soak test May 2026); Core/Veles keep gthread.
+  # dispatch, soak test May 2026); Core/Veles keep gthread — see
+  # expected_drift below.
   - containers/server/django/start
   - containers/local/celery/start
   - containers/server/celery/start
 root_excludes: []
+expected_drift:
+  # H/M/D run the gunicorn gevent worker class (RabbitMQ dispatch from
+  # web workers); Core/Veles deliberately keep gthread — their web tier
+  # does not dispatch over MQ on the request path. Documented, allowed
+  # drift; guarded per project by
+  # tests/config/test_deployment_wiring.py.
+  - root:containers/server/django/start

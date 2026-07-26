@@ -90,8 +90,8 @@ src_paths:
   - templates/admin/base_site.html
   - templates/admin/db_unavailable.html
 src_excludes:
-  # MQ-stack health check tests are HMD-only (hmd-platform.yaml):
-  # Core/Veles have no Celery/RabbitMQ libraries installed.
+  # MQ-stack health check tests are owned by message-queue.yaml
+  # (all five projects since the 2026-07-26 Core/Veles onboarding).
   - tests/unit/health/services/test_celery_check.py
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py

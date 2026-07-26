@@ -6,8 +6,9 @@ applicable_projects:
   - mailman
   - doccreator
 src_paths:
-  - apps/common_celery/**/*.py
-  - apps/tools_mq/**/*.py
+  # MQ-stack entries (common_celery, tools_mq, MQ health tests) moved
+  # to message-queue.yaml on 2026-07-26 — that manifest now spans all
+  # five projects.
   - apps/jinja/**/*.py
   - apps/artifacts/**/*.py
   - apps/blueprints/**/*.py
@@ -44,12 +45,6 @@ src_paths:
   - static/admin/css/production.css
   - static/admin/css/uat.css
   - tests/unit/jinja/**/*.py
-  - tests/unit/tools_mq/**/*.py
-  # MQ-stack tests for the otherwise all-five health app (excluded
-  # from base.yaml).
-  - tests/unit/health/services/test_celery_check.py
-  - tests/unit/health/services/test_flower_check.py
-  - tests/unit/health/services/test_rabbitmq_check.py
   - tests/unit/artifacts/**/*.py
   - tests/unit/blueprints/**/*.py
   - tests/unit/attachments/**/*.py
@@ -62,7 +57,6 @@ src_paths:
   - tests/unit/test_config.py
   - tests/unit/test_init.py
   - tests/unit/test_utils.py
-  - tests/integration/common_celery/**/*.py
   - tests/integration/test_admin_file_upload.py
   - tests/integration/test_artifact_deletion.py
   - tests/integration/test_jinja_template_dependencies.py
