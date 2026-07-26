@@ -68,8 +68,12 @@ def parse(tmp_path: Path, body: str) -> cli.Manifest:
 def verify(
     workspace: Path, manifest: cli.Manifest, capsys: pytest.CaptureFixture[str]
 ) -> tuple[tuple[int, int, int], str]:
-    result = cli.verify_manifest(workspace, manifest, detail_limit=50)
-    return result, capsys.readouterr().out
+    # verify_manifest returns (differ, equivalent, missing, expected);
+    # these legacy assertions only care about the first three.
+    differ, equivalent, missing, _expected = cli.verify_manifest(
+        workspace, manifest, detail_limit=50
+    )
+    return (differ, equivalent, missing), capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------
@@ -559,6 +563,106 @@ class TestNormalizedDigest:
 
 
 # ---------------------------------------------------------------------------
+# expected_drift — documented, allowed drift
+# ---------------------------------------------------------------------------
+
+
+class TestExpectedDrift:
+    def test_parses_expected_drift(self, tmp_path: Path) -> None:
+        manifest = parse(
+            tmp_path,
+            "root_paths:\n  - dc.sh\nexpected_drift:\n  - root:dc.sh\n",
+        )
+        assert manifest.expected_drift == ("root:dc.sh",)
+
+    def test_bad_expected_drift_entry_raises(self, tmp_path: Path) -> None:
+        path = write_manifest(
+            tmp_path,
+            "name: test\n"
+            "canonical_project: core\n"
+            "applicable_projects:\n  - core\n  - veles\n"
+            "root_paths:\n  - dc.sh\n"
+            "expected_drift:\n  - dc.sh\n",
+        )
+        with pytest.raises(ValueError, match="expected_drift entries must be"):
+            cli.parse_manifest(path)
+
+    def test_expected_drift_not_counted_as_differ(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        workspace = make_workspace(
+            tmp_path,
+            {
+                "core": {"root:dc.sh": "genuinely core-only content\n"},
+                "veles": {"root:dc.sh": "totally different veles content\n"},
+            },
+        )
+        manifest = parse(
+            tmp_path,
+            "root_paths:\n  - dc.sh\nexpected_drift:\n  - root:dc.sh\n",
+        )
+
+        differ, equivalent, missing, expected = cli.verify_manifest(
+            workspace, manifest, detail_limit=50
+        )
+        out = capsys.readouterr().out
+
+        assert (differ, equivalent, missing, expected) == (0, 0, 0, 1)
+        assert "Expected drift (documented, allowed):" in out
+        assert "Drift:" not in out
+
+    def test_real_drift_outside_expected_still_counts(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """An expected_drift entry for one file does not excuse drift in
+        another tracked file."""
+        workspace = make_workspace(
+            tmp_path,
+            {
+                "core": {
+                    "root:dc.sh": "allowed core\n",
+                    "root:dc.bat": "core one\n",
+                },
+                "veles": {
+                    "root:dc.sh": "allowed veles\n",
+                    "root:dc.bat": "veles two\n",
+                },
+            },
+        )
+        manifest = parse(
+            tmp_path,
+            "root_paths:\n  - dc.sh\n  - dc.bat\n"
+            "expected_drift:\n  - root:dc.sh\n",
+        )
+
+        differ, equivalent, missing, expected = cli.verify_manifest(
+            workspace, manifest, detail_limit=50
+        )
+
+        assert (differ, expected) == (1, 1)
+
+    def test_stale_expected_drift_pattern_raises(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """An expected_drift pattern matching no tracked file is an
+        error (surfaces stale exceptions)."""
+        workspace = make_workspace(
+            tmp_path,
+            {
+                "core": {"root:dc.sh": "x\n"},
+                "veles": {"root:dc.sh": "x\n"},
+            },
+        )
+        manifest = parse(
+            tmp_path,
+            "root_paths:\n  - dc.sh\nexpected_drift:\n  - root:not-tracked.sh\n",
+        )
+
+        with pytest.raises(ValueError, match="expected_drift pattern"):
+            cli.verify_manifest(workspace, manifest, detail_limit=50)
+
+
+# ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
 
@@ -629,6 +733,31 @@ class TestMain:
 
         assert exit_code == 1
         assert "FAIL" in capsys.readouterr().err
+
+    def test_strict_passes_on_expected_drift(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        make_workspace(
+            tmp_path,
+            {
+                "core": {"root:dc.sh": "core-only body\n"},
+                "veles": {"root:dc.sh": "veles-only body\n"},
+            },
+        )
+        write_manifest(
+            tmp_path,
+            MANIFEST_TEMPLATE.format(
+                body="root_paths:\n  - dc.sh\nexpected_drift:\n  - root:dc.sh\n"
+            ),
+        )
+
+        exit_code = self.run_main(tmp_path, monkeypatch, "--strict")
+
+        assert exit_code == 0
+        assert "expected=1" in capsys.readouterr().out
 
     def test_unmatched_pattern_exits_2_without_strict(
         self,

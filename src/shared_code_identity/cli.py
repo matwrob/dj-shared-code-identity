@@ -48,6 +48,7 @@ LIST_KEYS = {
     "root_paths",
     "root_excludes",
     "project_name_insensitive",
+    "expected_drift",
 }
 
 
@@ -75,6 +76,13 @@ class Manifest:
     root_paths: tuple[str, ...]
     root_excludes: tuple[str, ...]
     project_name_insensitive: tuple[str, ...]
+    # Tracked files that are KNOWN and ALLOWED to genuinely differ across
+    # projects (beyond a project-name substitution) — e.g. DocCreator's
+    # WeasyPrint Dockerfile block, Veles' gateway server nginx.conf. Such
+    # files are reported under "Expected drift" and do NOT count toward
+    # the strict-mode failure total, but any drift NOT listed here still
+    # fails --strict. Entries are 'src:<pattern>' / 'root:<pattern>'.
+    expected_drift: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -144,6 +152,7 @@ def parse_manifest(path: Path) -> Manifest:
         root_paths=list_value("root_paths"),
         root_excludes=list_value("root_excludes"),
         project_name_insensitive=list_value("project_name_insensitive"),
+        expected_drift=list_value("expected_drift"),
     )
     validate_manifest(manifest)
     return manifest
@@ -160,16 +169,20 @@ def validate_manifest(manifest: Manifest) -> None:
         raise ValueError(
             f"{manifest.path}: canonical_project must be in applicable_projects"
         )
-    bad_entries = [
-        entry
-        for entry in manifest.project_name_insensitive
-        if entry.split(":", 1)[0] not in ANCHORS or ":" not in entry
-    ]
-    if bad_entries:
-        raise ValueError(
-            f"{manifest.path}: project_name_insensitive entries must be "
-            f"'src:<pattern>' or 'root:<pattern>': {', '.join(bad_entries)}"
-        )
+    for key, entries in (
+        ("project_name_insensitive", manifest.project_name_insensitive),
+        ("expected_drift", manifest.expected_drift),
+    ):
+        bad_entries = [
+            entry
+            for entry in entries
+            if ":" not in entry or entry.split(":", 1)[0] not in ANCHORS
+        ]
+        if bad_entries:
+            raise ValueError(
+                f"{manifest.path}: {key} entries must be "
+                f"'src:<pattern>' or 'root:<pattern>': {', '.join(bad_entries)}"
+            )
 
 
 def project_root(workspace: Path, project: str) -> Path:
@@ -262,13 +275,17 @@ def normalized_digest(path: Path, project: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def flagged_files(
-    manifest: Manifest, files: list[SharedFile]
+def resolve_patterns(
+    patterns: tuple[str, ...], files: list[SharedFile]
 ) -> tuple[set[SharedFile], list[str]]:
-    """Resolve project_name_insensitive patterns against tracked files."""
-    flagged: set[SharedFile] = set()
+    """Resolve ``anchor:pattern`` entries against tracked files.
+
+    Returns the matched files and the patterns that matched nothing (so
+    stale manifest entries can be surfaced as errors).
+    """
+    matched: set[SharedFile] = set()
     unmatched: list[str] = []
-    for pattern in manifest.project_name_insensitive:
+    for pattern in patterns:
         hits = [
             shared_file
             for shared_file in files
@@ -277,10 +294,17 @@ def flagged_files(
             )
         ]
         if hits:
-            flagged.update(hits)
+            matched.update(hits)
         else:
             unmatched.append(pattern)
-    return flagged, unmatched
+    return matched, unmatched
+
+
+def flagged_files(
+    manifest: Manifest, files: list[SharedFile]
+) -> tuple[set[SharedFile], list[str]]:
+    """Resolve project_name_insensitive patterns against tracked files."""
+    return resolve_patterns(manifest.project_name_insensitive, files)
 
 
 def raise_unmatched_patterns(
@@ -326,7 +350,9 @@ def print_rows(title: str, rows: list[str], limit: int) -> None:
     print()
 
 
-def verify_manifest(workspace: Path, manifest: Manifest, detail_limit: int) -> tuple[int, int, int]:
+def verify_manifest(
+    workspace: Path, manifest: Manifest, detail_limit: int
+) -> tuple[int, int, int, int]:
     files, unmatched = manifest_files(workspace, manifest)
     if unmatched:
         raise_unmatched_patterns(workspace, manifest, unmatched)
@@ -338,22 +364,41 @@ def verify_manifest(workspace: Path, manifest: Manifest, detail_limit: int) -> t
             f"included via src_paths/root_paths): "
             + ", ".join(repr(item) for item in unmatched_flags)
         )
+    expected_drift, unmatched_expected = resolve_patterns(
+        manifest.expected_drift, files
+    )
+    if unmatched_expected:
+        raise ValueError(
+            f"manifest {manifest.name!r}: expected_drift pattern(s) "
+            f"matched no tracked files (patterns apply to files already "
+            f"included via src_paths/root_paths): "
+            + ", ".join(repr(item) for item in unmatched_expected)
+        )
 
     total = len(files)
     identical = 0
     equivalent = 0
     differ = 0
     missing = 0
+    expected = 0
     by_bucket: dict[str, dict[str, int]] = {}
     drift_rows: list[str] = []
     equivalent_rows: list[str] = []
+    expected_rows: list[str] = []
     missing_rows: list[str] = []
 
     for shared_file in files:
         label = bucket(shared_file)
         stats = by_bucket.setdefault(
             label,
-            {"total": 0, "identical": 0, "equiv": 0, "differ": 0, "missing": 0},
+            {
+                "total": 0,
+                "identical": 0,
+                "equiv": 0,
+                "differ": 0,
+                "expected": 0,
+                "missing": 0,
+            },
         )
         stats["total"] += 1
 
@@ -394,15 +439,23 @@ def verify_manifest(workspace: Path, manifest: Manifest, detail_limit: int) -> t
                 )
                 continue
 
-        differ += 1
-        stats["differ"] += 1
         short = " ".join(
             f"{project}={digests[project][:8]}" for project in manifest.applicable_projects
         )
         note = " (differs beyond project name)" if shared_file in name_insensitive else ""
-        drift_rows.append(
-            f"  {short}  {shared_file.anchor}:{shared_file.relative_path}{note}"
-        )
+        row = f"  {short}  {shared_file.anchor}:{shared_file.relative_path}{note}"
+
+        if shared_file in expected_drift:
+            # Documented, allowed drift — reported separately and does
+            # not count toward the strict-mode failure total.
+            expected += 1
+            stats["expected"] += 1
+            expected_rows.append(row)
+            continue
+
+        differ += 1
+        stats["differ"] += 1
+        drift_rows.append(row)
 
     print(f"=== {manifest.name} ===")
     print(manifest.description)
@@ -411,26 +464,29 @@ def verify_manifest(workspace: Path, manifest: Manifest, detail_limit: int) -> t
     print()
     print(
         f"{'Bucket':24} {'total':>6} {'ident':>6} {'equiv':>6} "
-        f"{'differ':>6} {'miss':>6}"
+        f"{'differ':>6} {'expect':>6} {'miss':>6}"
     )
-    print(f"{'-' * 24} {'-' * 6} {'-' * 6} {'-' * 6} {'-' * 6} {'-' * 6}")
+    dashes = " ".join(["-" * 24, *(["-" * 6] * 6)])
+    print(dashes)
     for label in sorted(by_bucket):
         stats = by_bucket[label]
         print(
             f"{label:24} {stats['total']:6} {stats['identical']:6} "
-            f"{stats['equiv']:6} {stats['differ']:6} {stats['missing']:6}"
+            f"{stats['equiv']:6} {stats['differ']:6} {stats['expected']:6} "
+            f"{stats['missing']:6}"
         )
-    print(f"{'-' * 24} {'-' * 6} {'-' * 6} {'-' * 6} {'-' * 6} {'-' * 6}")
+    print(dashes)
     print(
         f"{'TOTAL':24} {total:6} {identical:6} {equivalent:6} "
-        f"{differ:6} {missing:6}"
+        f"{differ:6} {expected:6} {missing:6}"
     )
     print()
 
     print_rows("Equivalent (differ only by project name):", equivalent_rows, detail_limit)
+    print_rows("Expected drift (documented, allowed):", expected_rows, detail_limit)
     print_rows("Drift:", drift_rows, detail_limit)
     print_rows("Missing:", missing_rows, detail_limit)
-    return differ, equivalent, missing
+    return differ, equivalent, missing, expected
 
 
 def sync_manifest(
@@ -577,12 +633,13 @@ def main() -> int:
     total_differ = 0
     total_equivalent = 0
     total_missing = 0
+    total_expected = 0
     manifest_errors = 0
     for index, manifest in enumerate(manifests):
         if index:
             print()
         try:
-            differ, equivalent, missing = verify_manifest(
+            differ, equivalent, missing, expected = verify_manifest(
                 workspace, manifest, args.detail_limit
             )
         except ValueError as exc:
@@ -592,12 +649,13 @@ def main() -> int:
         total_differ += differ
         total_equivalent += equivalent
         total_missing += missing
+        total_expected += expected
 
     print("=== Summary ===")
     print(
         f"manifests={len(manifests)} errors={manifest_errors} "
         f"differ={total_differ} equiv={total_equivalent} "
-        f"missing={total_missing}"
+        f"expected={total_expected} missing={total_missing}"
     )
 
     if manifest_errors:

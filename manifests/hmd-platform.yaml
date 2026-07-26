@@ -87,3 +87,11 @@ project_name_insensitive:
   # expected to drift until its WeasyPrint dnf block is parameterized.
   - root:containers/local/base/Dockerfile
   - root:containers/server/base/Dockerfile
+expected_drift:
+  # DocCreator's base Dockerfiles carry an extra WeasyPrint dnf block
+  # (PDF rendering) that Hub/Mailman do not need, so they genuinely
+  # differ beyond the project name. Documented, allowed drift — do not
+  # sync the canonical copy over DocCreator. Remove these once the
+  # WeasyPrint block is parameterized out.
+  - root:containers/local/base/Dockerfile
+  - root:containers/server/base/Dockerfile

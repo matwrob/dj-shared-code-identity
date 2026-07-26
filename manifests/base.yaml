@@ -149,3 +149,10 @@ project_name_insensitive:
   # NOTE: never flag files that are byte-identical because they enumerate ALL
   # projects (01_init.sql, rabbitmq definitions.json) — normalizing each
   # project's own name would break their identity.
+expected_drift:
+  # Veles' server nginx.conf plays the gateway role (WAF -> gateway
+  # Nginx -> Veles over the podman network), while the other projects'
+  # files are the second-hop Nginx behind that gateway. It genuinely
+  # differs beyond the project name and must NOT be synced from the
+  # canonical copy — documented, allowed drift.
+  - root:containers/server/nginx/nginx.conf
