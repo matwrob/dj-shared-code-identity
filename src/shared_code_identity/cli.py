@@ -496,8 +496,10 @@ def sync_manifest(
 
     Dry-run unless ``apply`` is true. Files flagged
     project_name_insensitive are never copied (they legitimately embed
-    each project's own name); differing ones are reported as skipped.
-    Returns (planned_or_copied, skipped_name_insensitive).
+    each project's own name), and neither are files listed under
+    expected_drift (their divergence is documented and allowed — see
+    verify); both are reported as skipped.
+    Returns (planned_or_copied, skipped).
     """
     files, unmatched = manifest_files(workspace, manifest)
     if unmatched:
@@ -509,6 +511,12 @@ def sync_manifest(
             f"matched no tracked files: "
             + ", ".join(repr(item) for item in unmatched_flags)
         )
+    expected_drift, _unmatched_expected = resolve_patterns(
+        manifest.expected_drift, files
+    )
+    # Unmatched expected_drift patterns are deliberately NOT fatal
+    # here: a pattern may match only files that are still identical
+    # (nothing to skip), and verify already errors on stale patterns.
 
     copied = 0
     skipped = 0
@@ -536,6 +544,14 @@ def sync_manifest(
             skipped += 1
             print(
                 f"  SKIP (name-insensitive) "
+                f"{shared_file.anchor}:{shared_file.relative_path} -> "
+                + ", ".join(project for project, _ in targets)
+            )
+            continue
+        if shared_file in expected_drift:
+            skipped += 1
+            print(
+                f"  SKIP (expected drift) "
                 f"{shared_file.anchor}:{shared_file.relative_path} -> "
                 + ", ".join(project for project, _ in targets)
             )

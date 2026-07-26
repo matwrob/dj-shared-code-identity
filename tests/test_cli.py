@@ -877,3 +877,49 @@ class TestSync:
 
         assert exit_code == 2
         assert "--apply requires --sync" in capsys.readouterr().err
+
+    def make_with_expected_drift(self, tmp_path):
+        """Workspace where the drifted file is documented expected drift."""
+        workspace = make_workspace(
+            tmp_path,
+            {
+                "core": {
+                    "src:requirements/shared/base.in": "Django==5.2.16\n",
+                    "root:containers/server/django/start": "gthread\n",
+                },
+                "veles": {
+                    "src:requirements/shared/base.in": "Django==5.2.16\n",
+                    "root:containers/server/django/start": "gevent\n",
+                },
+            },
+        )
+        write_manifest(
+            tmp_path,
+            MANIFEST_TEMPLATE.format(
+                body=(
+                    "src_paths:\n"
+                    "  - requirements/shared/base.in\n"
+                    "root_paths:\n"
+                    "  - containers/server/django/start\n"
+                    "expected_drift:\n"
+                    "  - root:containers/server/django/start\n"
+                )
+            ),
+        )
+        return workspace
+
+    def test_sync_skips_expected_drift(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """--sync --apply must never overwrite documented expected drift."""
+        workspace = self.make_with_expected_drift(tmp_path)
+        drifted = (
+            workspace / "veles" / "containers" / "server" / "django" / "start"
+        )
+
+        exit_code = self.run_cli(tmp_path, monkeypatch, "--sync", "--apply")
+
+        out = capsys.readouterr().out
+        assert exit_code == 0
+        assert "SKIP (expected drift)" in out
+        assert drifted.read_text() == "gevent\n"
