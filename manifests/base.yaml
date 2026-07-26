@@ -75,6 +75,7 @@ src_paths:
   - tests/unit/test_init.py
   - tests/unit/test_utils.py
   - tests/unit/audit/**
+  - tests/integration/audit/**
   - tests/unit/authentication/**
   - tests/unit/common/**
   - tests/unit/error_handlers/**
