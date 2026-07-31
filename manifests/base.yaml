@@ -7,6 +7,7 @@ applicable_projects:
   - hub
   - mailman
   - doccreator
+  - visor
 src_paths:
   - apps/__init__.py
   - apps/config.py

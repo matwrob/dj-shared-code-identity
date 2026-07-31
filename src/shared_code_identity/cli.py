@@ -18,6 +18,7 @@ PROJECT_ROOTS = {
     "hub": Path("hub"),
     "mailman": Path("mailman"),
     "doccreator": Path("doccreator"),
+    "visor": Path("visor"),
 }
 
 # Case-insensitive match of a project's own name inside its own files, bounded
