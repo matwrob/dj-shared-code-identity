@@ -22,7 +22,18 @@ src_paths:
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
   - tests/config/test_celery.py
+  # Guards the config/__init__.py re-export below; unlike
+  # test_celery.py it does not import config.celery itself, so it
+  # fails when the package-level registration is missing.
+  - tests/config/test_celery_registration.py
   - tests/common_celery_safety.py
+  # Registers the Celery app on Django startup (web/test processes,
+  # not only the worker CLI): without it, @shared_task publishing
+  # from a web process uses an unconfigured default app and
+  # django-structlog never binds task_id outside the worker.
+  # Missing from this manifest until 2026-08-06 — exactly how Veles
+  # and Core shipped with an empty config/__init__.py.
+  - config/__init__.py
   - config/celery.py
   - config/settings/mq.py
   - config/urls/shared/mq.py
