@@ -7,7 +7,8 @@ applicable_projects:
   - doccreator
   - core
   - veles
-  - visor
+  # - visor
+  # - midas
 src_paths:
   - apps/common_celery/**/*.py
   # Flower/RabbitMQ admin proxy — MQ machinery (moved here from
@@ -26,6 +27,15 @@ src_paths:
   # test_celery.py it does not import config.celery itself, so it
   # fails when the package-level registration is missing.
   - tests/config/test_celery_registration.py
+  # Guards each project's `celery -A config.<project>` import bridge
+  # (config/<project>.py); name-insensitive below because the bridge
+  # module name embeds the project name.
+  - tests/config/test_celery_bridge.py
+  # JSON-serializability contract for all registered task
+  # signatures: eager-mode suites skip argument serialization, so
+  # non-JSON annotations (UUID/datetime/model) would only fail at
+  # the real broker without this sweep.
+  - tests/config/test_celery_task_serialization.py
   - tests/common_celery_safety.py
   # Registers the Celery app on Django startup (web/test processes,
   # not only the worker CLI): without it, @shared_task publishing
@@ -50,6 +60,9 @@ root_paths:
   - containers/local/celery/start
   - containers/server/celery/start
 root_excludes: []
+project_name_insensitive:
+  # Structurally identical; imports/docstrings embed config.<project>.
+  - src:tests/config/test_celery_bridge.py
 expected_drift:
   # H/M/D run the gunicorn gevent worker class (RabbitMQ dispatch from
   # web workers); Core/Veles deliberately keep gthread — their web tier
