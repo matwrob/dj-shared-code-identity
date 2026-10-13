@@ -6,7 +6,9 @@ applicable_projects:
   - hub
   - mailman
   - doccreator
-  - visor
+  # - visor
+  # - midas
+  # - sifter
 src_paths:
   - apps/health/services/redis_check.py
   - tests/unit/health/services/test_redis_check.py
@@ -15,4 +17,3 @@ src_paths:
 src_excludes: []
 root_paths: []
 root_excludes: []
-

@@ -13,6 +13,10 @@ src_paths:
   - apps/artifacts/**/*.py
   - apps/blueprints/**/*.py
   - apps/attachments/**/*.py
+  # Core reference data snapshots (added 2026-10-13): the app, its
+  # envelope schema (not matched by the *.py globs) and its tests.
+  - apps/core_reference_data/**/*.py
+  - apps/core_reference_data/schemas/*.json
   - apps/config.py
   - apps/utils.py
   - apps/__init__.py
@@ -48,23 +52,29 @@ src_paths:
   - tests/unit/artifacts/**/*.py
   - tests/unit/blueprints/**/*.py
   - tests/unit/attachments/**/*.py
+  - tests/unit/core_reference_data/**/*.py
   - tests/integration/test_admin_blueprint_tests_render.py
   - tests/integration/test_blueprints_checks.py
   - tests/integration/test_blueprints_render.py
   - tests/hmd_fixtures.py
   - tests/factories/artifacts.py
   - tests/factories/blueprints.py
+  - tests/factories/core_reference_data.py
   - tests/unit/test_config.py
   - tests/unit/test_init.py
   - tests/unit/test_utils.py
   - tests/integration/test_admin_file_upload.py
+  # Dev-DB seed guard for the real-broker pipeline e2e (the test
+  # modules themselves are project-specific; the guard is generic).
+  - tests/e2e/pipeline/conftest.py
   - tests/integration/test_artifact_deletion.py
   - tests/integration/test_jinja_template_dependencies.py
   - tests/integration/test_openapi_schema.py
   - tests/e2e/ui/test_file_uploads.py
-src_excludes:
-  - apps/artifacts/migrations/**
-  - apps/blueprints/migrations/**
+# Migration excludes removed 2026-08-18: after the H/M/D squash the
+# artifacts/blueprints migrations are byte-identical across the three
+# projects and are tracked like any other shared source file.
+src_excludes: []
 root_paths:
   # All-five container files live in base.yaml; MQ worker scripts live in
   # message-queue.yaml. Here: files whose HMD shape differs from Core/Veles

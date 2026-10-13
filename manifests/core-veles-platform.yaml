@@ -31,3 +31,12 @@ project_name_insensitive:
   - root:containers/compose/server.yml
   - root:containers/local/base/Dockerfile
   - root:containers/server/base/Dockerfile
+  # Embeds the migrate unit's own name (container-<project>-migrate.service).
+  - root:containers/server/django/start
+expected_drift:
+  # Project-name normalization also strips the English word "core" from
+  # Core's gunicorn worker-count comment ("... for 4-core server"),
+  # which Veles' copy never had to begin with — a false-positive match
+  # on "core" the CPU-core word, not "core" the project name. No actual
+  # content differs once that one comment line is set aside.
+  - root:containers/server/django/start

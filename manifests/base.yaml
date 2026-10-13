@@ -7,7 +7,9 @@ applicable_projects:
   - hub
   - mailman
   - doccreator
-  - visor
+  # - visor
+  # - midas
+  # - sifter
 src_paths:
   - apps/__init__.py
   - apps/config.py
@@ -64,6 +66,10 @@ src_paths:
   - tests/config/test_password_hashers.py
   - tests/config/test_redis_settings.py
   - tests/config/test_throttling.py
+  # PUT-never-creates contract: no put: operation in the committed
+  # OpenAPI schema may declare 201 (vacuously green in projects
+  # with no PUT surface; guards the day one appears).
+  - tests/config/test_openapi_put_contract.py
   - tests/e2e/__init__.py
   - tests/e2e/api/__init__.py
   - tests/e2e/load/__init__.py
@@ -71,6 +77,11 @@ src_paths:
   - tests/functional/__init__.py
   - tests/functional/admin/__init__.py
   - tests/integration/__init__.py
+  # Registry-driven admin search smoke test (no project imports):
+  # renders every changelist that declares search_fields with ?q=
+  # and catches bare-FK search fields (FieldError 500) and Oracle
+  # DISTINCT-on-NCLOB failures (ORA-00932) in one sweep.
+  - tests/integration/test_admin_changelist_search.py
   - tests/unit/__init__.py
   - tests/unit/test_config.py
   - tests/unit/test_init.py
@@ -97,11 +108,14 @@ src_excludes:
   - tests/unit/health/services/test_celery_check.py
   - tests/unit/health/services/test_flower_check.py
   - tests/unit/health/services/test_rabbitmq_check.py
-  - apps/audit/migrations/**
-  # Migration histories legitimately diverge (Core squashes around its
-  # production DB; dev projects regenerate freely).
-  - apps/authentication/migrations/**
-  - apps/common/migrations/**
+  # Migration excludes removed 2026-08-18: after the fleet-wide
+  # squash, audit/authentication migrations are byte-identical
+  # across H/M/D (DocCreator's copies are the origin; re-squashed
+  # 2026-08-18 evening to fold the help-text cleanup into fresh
+  # initials). EXPECTED drift, resolved later: Core keeps its
+  # production-compatible incremental history until the v1.1.0
+  # reset cycle; Veles inherits the DocCreator migrations at its
+  # own squash after the external-documents work lands.
   - requirements/server.txt
 root_paths:
   - .editorconfig

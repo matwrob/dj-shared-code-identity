@@ -18,11 +18,13 @@ src_paths:
   - tests/integration/test_blueprints_checks.py
   - tests/integration/test_blueprints_render.py
   - tests/integration/test_artifact_deletion.py
+  - tests/integration/test_jinja_showcase_contract.py
   - tests/integration/test_jinja_template_dependencies.py
   - templates/admin/blueprints/**/*.html
-src_excludes:
-  - apps/artifacts/migrations/**
-  - apps/blueprints/migrations/**
+# Migration excludes removed 2026-08-18: after the H/M/D squash the
+# artifacts/blueprints migrations are byte-identical across the three
+# projects and are tracked like any other shared source file.
+src_excludes: []
 root_paths: []
 root_excludes: []
 
